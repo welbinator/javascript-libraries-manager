@@ -1,0 +1,24 @@
+<?php
+if (!defined('ABSPATH')) {
+    exit;
+}
+
+$js_libs_manager_libraries = array(
+    'gsap' => array(
+        'label' => 'GSAP (with ScrollTrigger)',
+        'enqueue_callback' => 'js_libs_manager_enqueue_gsap',
+        'file' => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/gsap.php'
+    ),
+    'swiper' => array(
+        'label' => 'Swiper.js (with CSS)',
+        'enqueue_callback' => 'js_libs_manager_enqueue_swiper',
+        'file' => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/swiper.php'
+    ),
+   
+);
+
+foreach ($js_libs_manager_libraries as $lib) {
+    if (file_exists($lib['file'])) {
+        require_once $lib['file'];
+    }
+}
