@@ -1,24 +1,41 @@
 <?php
-if (!defined('ABSPATH')) {
+
+namespace JS_Libs_Manager;
+
+if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-// Swiper-specific enqueue (JS + CSS)
+/**
+ * Enqueue Swiper.js (bundle) + CSS from jsDelivr.
+ *
+ * Uses official bundle for full features (navigation, pagination, autoplay, etc.).
+ */
 function js_libs_manager_enqueue_swiper() {
-    // Enqueue Swiper CSS
+    // Swiper CSS
     wp_enqueue_style(
-        'swiper-css',
+        'js-libs-manager-swiper-css',
         'https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.css',
         array(),
         JS_LIBS_MANAGER_VERSION
     );
 
-    // Enqueue Swiper JS bundle
+    // Swiper JS (bundle) – loads in footer
     wp_enqueue_script(
-        'swiper-js',
+        'js-libs-manager-swiper',
         'https://cdn.jsdelivr.net/npm/swiper@12/swiper-bundle.min.js',
         array(),
         JS_LIBS_MANAGER_VERSION,
         true
     );
+
+    // Ensure global `Swiper` is available before inline scripts
+    wp_add_inline_script(
+        'js-libs-manager-swiper',
+        'window.Swiper = Swiper;',
+        'before'
+    );
 }
+
+// Hook into WordPress
+add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\\js_libs_manager_enqueue_swiper' );

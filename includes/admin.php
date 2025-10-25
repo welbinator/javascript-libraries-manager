@@ -1,69 +1,123 @@
 <?php
-if (!defined('ABSPATH')) {
+
+namespace JS_Libs_Manager;
+
+if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-// Register settings
-function js_libs_manager_register_settings() {
-    register_setting('js_libs_manager_options', 'js_libs_manager_enabled_libs', array(
-        'type' => 'array',
-        'sanitize_callback' => 'js_libs_manager_sanitize_enabled_libs',
-        'default' => array()
-    ));
+/**
+ * Register plugin settings.
+ */
+function register_settings() {
+    register_setting(
+        'js_libs_manager_options',
+        'js_libs_manager_enabled_libs',
+        [
+            'type'              => 'array',
+            'sanitize_callback' => __NAMESPACE__ . '\\sanitize_enabled_libs',
+            'default'           => [],
+        ]
+    );
 }
-add_action('admin_init', 'js_libs_manager_register_settings');
+add_action( 'admin_init', __NAMESPACE__ . '\\register_settings' );
 
-// Sanitize enabled libraries
-function js_libs_manager_sanitize_enabled_libs($input) {
-    global $js_libs_manager_libraries;
-    $sanitized = array();
-    $allowed_libs = array_keys($js_libs_manager_libraries);
-    foreach ($input as $lib) {
-        if (in_array($lib, $allowed_libs)) {
+/**
+ * Sanitize enabled libraries input.
+ *
+ * @param array $input Raw input from checkbox array.
+ * @return array Sanitized array of library keys.
+ */
+function sanitize_enabled_libs( $input ) {
+    $libraries   = get_registered_libraries(); // From config.php
+    $sanitized   = [];
+    $allowed_keys = array_keys( $libraries );
+
+    if ( ! is_array( $input ) ) {
+        return $sanitized;
+    }
+
+    foreach ( $input as $lib ) {
+        $lib = sanitize_key( $lib );
+        if ( in_array( $lib, $allowed_keys, true ) ) {
             $sanitized[] = $lib;
         }
     }
-    return $sanitized;
+
+    return array_unique( $sanitized );
 }
 
-// Add admin menu
-function js_libs_manager_admin_menu() {
+/**
+ * Add settings page to WordPress admin menu.
+ */
+function admin_menu() {
     add_options_page(
-        'JS Libraries Manager',
-        'JS Libraries',
+        __( 'JS Libraries Manager', 'js-libs-manager' ),
+        __( 'JS Libraries', 'js-libs-manager' ),
         'manage_options',
         'js-libs-manager',
-        'js_libs_manager_settings_page'
+        __NAMESPACE__ . '\\render_settings_page'
     );
 }
-add_action('admin_menu', 'js_libs_manager_admin_menu');
+add_action( 'admin_menu', __NAMESPACE__ . '\\admin_menu' );
 
-// Settings page callback
-function js_libs_manager_settings_page() {
-    global $js_libs_manager_libraries;
+/**
+ * Render the settings page.
+ */
+function render_settings_page() {
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_die( esc_html__( 'You do not have sufficient permissions to access this page.', 'js-libs-manager' ) );
+    }
+
+    $libraries     = get_registered_libraries();
+    $enabled_libs  = get_option( 'js_libs_manager_enabled_libs', [] );
     ?>
     <div class="wrap">
-        <h1>JS Libraries Manager</h1>
+        <h1><?php echo esc_html( get_admin_page_title() ); ?></h1>
+
         <form method="post" action="options.php">
             <?php
-            settings_fields('js_libs_manager_options');
-            do_settings_sections('js_libs_manager_options');
+            settings_fields( 'js_libs_manager_options' );
+            do_settings_sections( 'js_libs_manager_options' );
             ?>
-            <table class="form-table">
-                <tr valign="top">
-                    <th scope="row">Enabled Libraries</th>
+
+            <table class="form-table" role="presentation">
+                <tr>
+                    <th scope="row">
+                        <label for="js_libs_manager_enabled_libs">
+                            <?php esc_html_e( 'Enabled Libraries', 'js-libs-manager' ); ?>
+                        </label>
+                    </th>
                     <td>
-                        <?php
-                        $enabled_libs = get_option('js_libs_manager_enabled_libs', array());
-                        foreach ($js_libs_manager_libraries as $key => $lib) {
-                            $checked = in_array($key, $enabled_libs) ? 'checked="checked"' : '';
-                            echo '<label><input type="checkbox" name="js_libs_manager_enabled_libs[]" value="' . esc_attr($key) . '" ' . $checked . '> ' . esc_html($lib['label']) . '</label><br>';
-                        }
-                        ?>
-                        <p class="description">Select the JavaScript libraries you want to enqueue on the frontend.</p>
+                        <fieldset>
+                            <legend class="screen-reader-text">
+                                <?php esc_html_e( 'Select libraries to enqueue on frontend', 'js-libs-manager' ); ?>
+                            </legend>
+
+                            <?php foreach ( $libraries as $key => $lib ) : ?>
+                                <?php
+                                $checked = in_array( $key, $enabled_libs, true ) ? checked( true, true, false ) : '';
+                                ?>
+                                <label>
+                                    <input
+                                        type="checkbox"
+                                        name="js_libs_manager_enabled_libs[]"
+                                        value="<?php echo esc_attr( $key ); ?>"
+                                        <?php echo $checked; ?>
+                                    >
+                                    <?php echo esc_html( $lib['label'] ); ?>
+                                </label>
+                                <br>
+                            <?php endforeach; ?>
+
+                            <p class="description">
+                                <?php esc_html_e( 'Select the JavaScript libraries you want to enqueue on the frontend.', 'js-libs-manager' ); ?>
+                            </p>
+                        </fieldset>
                     </td>
                 </tr>
             </table>
+
             <?php submit_button(); ?>
         </form>
     </div>

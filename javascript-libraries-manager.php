@@ -1,27 +1,34 @@
 <?php
 /**
  * Plugin Name: JavaScript Libraries Manager
- * Plugin URI: https://example.com/js-libs-manager
- * Description: A simple WordPress plugin to manage and enqueue various JavaScript libraries like GSAP.
- * Version: 1.0.0
- * Author: Your Name
- * Author URI: https://example.com
- * License: GPL v2 or later
+ * Plugin URI:  https://example.com/js-libs-manager
+ * Description: A simple WordPress plugin to manage and enqueue various JavaScript libraries (GSAP, Swiper, Popper, etc.).
+ * Version:     1.0.0
+ * Author:      Your Name
+ * Author URI:  https://example.com
+ * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: js-libs-manager
  */
 
-// Prevent direct access
-if (!defined('ABSPATH')) {
-    exit;
+if ( ! defined( 'ABSPATH' ) ) {
+    exit; // Prevent direct access.
 }
 
-// Define plugin constants
-define('JS_LIBS_MANAGER_VERSION', '1.0.0');
-define('JS_LIBS_MANAGER_PLUGIN_URL', plugin_dir_url(__FILE__));
-define('JS_LIBS_MANAGER_PLUGIN_PATH', plugin_dir_path(__FILE__));
+/**
+ * ----------------------------------------------------------------------
+ *  CONSTANTS
+ * ----------------------------------------------------------------------
+ */
+define( 'JS_LIBS_MANAGER_VERSION', '1.0.0' );
+define( 'JS_LIBS_MANAGER_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
+define( 'JS_LIBS_MANAGER_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 
-// Load includes
+/**
+ * ----------------------------------------------------------------------
+ *  AUTOLOAD INCLUDES
+ * ----------------------------------------------------------------------
+ */
 require_once JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/config.php';
 require_once JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/admin.php';
 require_once JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/frontend.php';
