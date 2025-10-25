@@ -14,6 +14,11 @@ $js_libs_manager_libraries = array(
         'enqueue_callback' => 'js_libs_manager_enqueue_swiper',
         'file' => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/swiper.php'
     ),
+    'anime' => array(
+        'label' => 'Anime.js',
+        'enqueue_callback' => 'js_libs_manager_enqueue_anime',
+        'file' => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/anime.php'
+    ),
    
 );
 
