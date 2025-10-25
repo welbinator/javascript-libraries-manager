@@ -19,20 +19,22 @@ $js_libs_manager_libraries = array(
         'enqueue_callback' => 'js_libs_manager_enqueue_anime',
         'file' => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/anime.php'
     ),
-    // 'lodash' => ... (commented out or remove since we're skipping)
     'chartjs' => array(
         'label' => 'Chart.js',
         'enqueue_callback' => 'js_libs_manager_enqueue_chartjs',
         'file' => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/chartjs.php'
     ),
-    // Example for future libs—add here
-    /*
-    'aos' => array(
-        'label' => 'AOS (Animate on Scroll)',
-        'enqueue_callback' => 'js_libs_manager_enqueue_aos',
-        'file' => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/aos.php'
+    'popper' => array(
+        'label' => 'Popper.js (v2)',
+        'enqueue_callback' => 'js_libs_manager_enqueue_popper',
+        'file' => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/popper.php'
     ),
-    */
+    'floatingui' => array(
+        'label' => 'Floating UI (DOM)',
+        'enqueue_callback' => 'js_libs_manager_enqueue_floatingui',
+        'file' => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/floatingui.php'
+    ),
+   
 );
 
 foreach ($js_libs_manager_libraries as $lib) {
