@@ -23,6 +23,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'JS_LIBS_MANAGER_VERSION', '1.0.0' );
 define( 'JS_LIBS_MANAGER_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
 define( 'JS_LIBS_MANAGER_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
+define('YT_FOR_WP_MIN_WP_VERSION', '5.8');
+define('YT_FOR_WP_MIN_PHP_VERSION', '7.4');
 
 /**
  * ----------------------------------------------------------------------
@@ -32,3 +34,4 @@ define( 'JS_LIBS_MANAGER_PLUGIN_PATH', plugin_dir_path( __FILE__ ) );
 require_once JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/config.php';
 require_once JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/admin.php';
 require_once JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/frontend.php';
+include JS_LIBS_MANAGER_PLUGIN_PATH . 'github-update.php';
