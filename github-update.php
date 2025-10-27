@@ -3,7 +3,7 @@
  * Plugin Name: JavaScript Libraries Manager – Update Checker
  *
  * @package   JS_Libs_Manager
- * @since     1.1.0
+ * @since     1.1.1
  */
 
 namespace JS_Libs_Manager;
