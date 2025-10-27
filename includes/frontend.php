@@ -45,28 +45,31 @@ function enqueue_enabled_libraries() {
 
     $libs_to_load = [];
 
-    foreach ( $all_libs as $slug => $lib ) {
-        $callback = $lib['enqueue_callback'] ?? null;
-        if ( ! is_callable( $callback ) ) {
-            continue;
-        }
+   foreach ( $all_libs as $slug => $lib ) {
+    $callback = $lib['enqueue_callback'] ?? null;
+    if ( ! is_callable( $callback ) ) {
+        continue;
+    }
 
-        $should_load = false;
+    $should_load = false;
 
-        // Rule 1: Global ON → always load
-        if ( in_array( $slug, (array) $global_libs, true ) ) {
+    // Rule 1: Global ON → always load
+    if ( in_array( $slug, (array) $global_libs, true ) ) {
+        $should_load = true;
+    }
+    // Rule 2: Global OFF → load only if per-page term slug matches sanitized label
+    elseif ( empty( $global_libs ) ) {
+        $term_slug = sanitize_title( $lib['label'] ); // e.g., "embla-carousel-with-css"
+        if ( in_array( $term_slug, $post_libs, true ) ) {
             $should_load = true;
-        }
-        // Rule 2: Global OFF → load only if per-page checked
-        elseif ( empty( $global_libs ) && in_array( $slug, $post_libs, true ) ) {
-            $should_load = true;
-        }
-
-        if ( $should_load ) {
-            $libs_to_load[] = $slug;
-            call_user_func( $callback );
         }
     }
+
+    if ( $should_load ) {
+        $libs_to_load[] = $slug;
+        call_user_func( $callback );
+    }
+}
 
     // Optional: Debug (remove in production)
     // error_log( 'JS Libs Loaded: ' . implode( ', ', $libs_to_load ) );

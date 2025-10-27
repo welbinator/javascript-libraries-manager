@@ -168,3 +168,4 @@ add_filter( 'get_terms', function( $terms, $taxonomies, $args ) {
 
     return $terms;
 }, 10, 3 );
+
