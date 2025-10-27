@@ -57,6 +57,11 @@ $js_libs_manager_libraries = [
         'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_floatingui',
         'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/floatingui.php',
     ],
+    'embla' => [
+        'label'            => __( 'Embla Carousel (with CSS)', 'js-libs-manager' ),
+        'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_embla',
+        'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/embla.php',
+    ],
 ];
 
 /**
