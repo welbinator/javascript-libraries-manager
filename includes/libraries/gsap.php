@@ -1,4 +1,7 @@
 <?php
+
+namespace JS_Libs_Manager;
+
 if (!defined('ABSPATH')) {
     exit;
 }

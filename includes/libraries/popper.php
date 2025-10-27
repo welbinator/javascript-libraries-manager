@@ -19,5 +19,3 @@ function js_libs_manager_enqueue_popper() {
     );
 }
 
-// Hook it up — use namespaced function reference
-add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\\js_libs_manager_enqueue_popper' );

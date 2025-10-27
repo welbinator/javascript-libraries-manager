@@ -28,5 +28,3 @@ function js_libs_manager_enqueue_anime() {
     );
 }
 
-// Hook into WordPress
-add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\\js_libs_manager_enqueue_anime' );

@@ -26,32 +26,32 @@ if ( ! defined( 'ABSPATH' ) ) {
 $js_libs_manager_libraries = [
     'gsap' => [
         'label'            => __( 'GSAP (with ScrollTrigger)', 'js-libs-manager' ),
-        'enqueue_callback' => 'js_libs_manager_enqueue_gsap',
+        'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_gsap',
         'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/gsap.php',
     ],
     'swiper' => [
         'label'            => __( 'Swiper.js (with CSS)', 'js-libs-manager' ),
-        'enqueue_callback' => 'js_libs_manager_enqueue_swiper',
+        'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_swiper',
         'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/swiper.php',
     ],
     'anime' => [
         'label'            => __( 'Anime.js', 'js-libs-manager' ),
-        'enqueue_callback' => 'js_libs_manager_enqueue_anime',
+        'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_anime',
         'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/anime.php',
     ],
     'chartjs' => [
         'label'            => __( 'Chart.js', 'js-libs-manager' ),
-        'enqueue_callback' => 'js_libs_manager_enqueue_chartjs',
+        'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_chartjs',
         'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/chartjs.php',
     ],
     'popper' => [
         'label'            => __( 'Popper.js (v2)', 'js-libs-manager' ),
-        'enqueue_callback' => 'js_libs_manager_enqueue_popper',
+        'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_popper',
         'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/popper.php',
     ],
     'floatingui' => [
         'label'            => __( 'Floating UI (DOM)', 'js-libs-manager' ),
-        'enqueue_callback' => 'js_libs_manager_enqueue_floatingui',
+        'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_floatingui',
         'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/floatingui.php',
     ],
 ];
