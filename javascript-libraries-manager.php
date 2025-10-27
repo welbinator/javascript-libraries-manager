@@ -35,3 +35,17 @@ require_once JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/config.php';
 require_once JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/admin.php';
 require_once JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/frontend.php';
 include JS_LIBS_MANAGER_PLUGIN_PATH . 'github-update.php';
+
+/**
+ * ----------------------------------------------------------------------
+ *  REGISTER CUSTOM TAXONOMY FOR PER-PAGE LIBRARY SELECTION
+ * ----------------------------------------------------------------------
+ */
+register_taxonomy( 'js_library', ['post', 'page'], [
+    'label'        => __( 'JS Libraries', 'js-libs-manager' ),
+    'public'       => false,
+    'show_ui'      => true,
+    'show_in_rest' => true, 
+    'hierarchical' => false,
+    'rewrite'      => false,
+]);

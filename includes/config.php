@@ -1,6 +1,10 @@
 <?php
 /**
- * Config file – registers every library and loads its definition file.
+ * Config file – registers every JavaScript library and loads its definition file.
+ *
+ * Also handles:
+ * - Auto-creation of 'js_library' taxonomy terms
+ * - Exposing library data to admin, frontend, and taxonomy system
  *
  * @package JS_Libs_Manager
  */
@@ -11,17 +15,16 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-
-
 /**
  * ----------------------------------------------------------------------
  *  LIBRARY DEFINITIONS
  * ----------------------------------------------------------------------
  *
  * Each entry:
- *   - label            : Human-readable name (admin UI)
- *   - enqueue_callback : Function that enqueues the script (must be in the same namespace)
+ *   - label            : Human-readable name (admin UI + taxonomy term)
+ *   - enqueue_callback : Fully qualified callable (namespaced function)
  *   - file             : Path to the library-specific PHP file
+ *   - taxonomy_slug    : (optional) Custom slug for taxonomy term
  */
 $js_libs_manager_libraries = [
     'gsap' => [
@@ -57,8 +60,7 @@ $js_libs_manager_libraries = [
 ];
 
 /**
- * Load each library file **once** – the file itself will contain the
- * enqueue function in the same namespace.
+ * Load each library file once.
  */
 foreach ( $js_libs_manager_libraries as $lib ) {
     if ( file_exists( $lib['file'] ) ) {
@@ -66,10 +68,59 @@ foreach ( $js_libs_manager_libraries as $lib ) {
     }
 }
 
-/* ----------------------------------------------------------------------
- *  OPTIONAL: expose the array to other parts of the plugin (admin, etc.)
- * ---------------------------------------------------------------------- */
+/**
+ * Expose registered libraries to the rest of the plugin.
+ *
+ * @return array
+ */
 function get_registered_libraries(): array {
     global $js_libs_manager_libraries;
     return $js_libs_manager_libraries;
 }
+
+/**
+ * Auto-create taxonomy terms for each library.
+ *
+ * Runs on plugin activation or when a new library is added.
+ */
+function create_library_taxonomy_terms() {
+    $libraries = get_registered_libraries();
+
+    foreach ( $libraries as $slug => $lib ) {
+        $term_name = $lib['label'];
+        $term_slug = $slug;
+
+        // Optional: allow custom taxonomy slug
+        if ( ! empty( $lib['taxonomy_slug'] ) ) {
+            $term_slug = $lib['taxonomy_slug'];
+        }
+
+        if ( ! term_exists( $term_slug, 'js_library' ) ) {
+            wp_insert_term(
+                $term_name,
+                'js_library',
+                [
+                    'slug'        => $term_slug,
+                    'description' => sprintf(
+                        /* translators: %s = library name */
+                        __( 'Enables %s on this page when not globally active.', 'js-libs-manager' ),
+                        $term_name
+                    ),
+                ]
+            );
+        }
+    }
+}
+
+// Hook into plugin activation
+register_activation_hook( JS_LIBS_MANAGER_PLUGIN_PATH . 'js-libs-manager.php', __NAMESPACE__ . '\\create_library_taxonomy_terms' );
+
+/**
+ * Optional: Re-sync terms on save (e.g., when adding new library in code)
+ */
+add_action( 'admin_init', function() {
+    if ( get_option( 'js_libs_manager_terms_synced' ) !== JS_LIBS_MANAGER_VERSION ) {
+        create_library_taxonomy_terms();
+        update_option( 'js_libs_manager_terms_synced', JS_LIBS_MANAGER_VERSION );
+    }
+});
