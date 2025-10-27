@@ -33,7 +33,7 @@ function js_libs_manager_enqueue_embla() {
     );
 
      wp_enqueue_script(
-        'js-libs-manager-embla-autoplay',
+        'js-libs-manager-embla-auto-scroll',
         'https://unpkg.com/embla-carousel-auto-scroll/embla-carousel-auto-scroll.umd.js',
         array('js-libs-manager-embla'),
         JS_LIBS_MANAGER_VERSION,
@@ -41,7 +41,7 @@ function js_libs_manager_enqueue_embla() {
     );
 
     wp_enqueue_script(
-        'js-libs-manager-embla-autoplay',
+        'js-libs-manager-embla-auto-height',
         'https://unpkg.com/embla-carousel-auto-height/embla-carousel-auto-height.umd.js',
         array('js-libs-manager-embla'),
         JS_LIBS_MANAGER_VERSION,
@@ -49,7 +49,7 @@ function js_libs_manager_enqueue_embla() {
     );
 
     wp_enqueue_script(
-        'js-libs-manager-embla-autoplay',
+        'js-libs-manager-embla-class-names',
         'https://unpkg.com/embla-carousel-class-names/embla-carousel-class-names.umd.js',
         array('js-libs-manager-embla'),
         JS_LIBS_MANAGER_VERSION,
@@ -57,7 +57,7 @@ function js_libs_manager_enqueue_embla() {
     );
 
     wp_enqueue_script(
-        'js-libs-manager-embla-autoplay',
+        'js-libs-manager-embla-fade',
         'https://unpkg.com/embla-carousel-fade/embla-carousel-fade.umd.js',
         array('js-libs-manager-embla'),
         JS_LIBS_MANAGER_VERSION,
@@ -65,19 +65,25 @@ function js_libs_manager_enqueue_embla() {
     );
 
      wp_enqueue_script(
-        'js-libs-manager-embla-autoplay',
+        'js-libs-manager-embla-wheel-gestures',
         'https://unpkg.com/embla-carousel-wheel-gestures/dist/embla-carousel-wheel-gestures.umd.js',
         array('js-libs-manager-embla'),
         JS_LIBS_MANAGER_VERSION,
         true
     );
 
-    // Ensure global `emblaCarousel` is available before inline scripts
     wp_add_inline_script(
         'js-libs-manager-embla',
-        'window.emblaCarousel = emblaCarousel;',
-        'before'
+        '(function() { window.emblaCarousel = this.emblaCarousel; }).call(window);',
+        'after'
     );
+
+     // EXPOSE EACH PLUGIN
+    wp_add_inline_script('js-libs-manager-embla-autoplay', 'window.EmblaCarouselAutoplay = EmblaCarouselAutoplay;', 'after');
+    wp_add_inline_script('js-libs-manager-embla-auto-scroll', 'window.EmblaCarouselAutoScroll = EmblaCarouselAutoScroll;', 'after');
+    wp_add_inline_script('js-libs-manager-embla-auto-height', 'window.EmblaCarouselAutoHeight = EmblaCarouselAutoHeight;', 'after');
+    wp_add_inline_script('js-libs-manager-embla-class-names', 'window.EmblaCarouselClassNames = EmblaCarouselClassNames;', 'after');
+    wp_add_inline_script('js-libs-manager-embla-fade', 'window.EmblaCarouselFade = EmblaCarouselFade;', 'after');
+    wp_add_inline_script('js-libs-manager-embla-wheel-gestures', 'window.EmblaCarouselWheelGestures = EmblaCarouselWheelGestures;', 'after');
 }
 
-// NO add_action() here! – Controlled by frontend.php

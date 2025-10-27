@@ -24,7 +24,7 @@ function js_libs_manager_enqueue_chartjs() {
     wp_add_inline_script(
         'js-libs-manager-chartjs',
         'window.Chart = Chart;', // Ensure global access
-        'before'
+        'after'
     );
 }
 

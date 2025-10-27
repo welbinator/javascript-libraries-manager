@@ -24,7 +24,7 @@ function js_libs_manager_enqueue_anime() {
     wp_add_inline_script(
         'js-libs-manager-anime',
         'window.anime = anime;',
-        'before'
+        'after'
     );
 }
 
