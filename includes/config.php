@@ -78,25 +78,30 @@ function get_registered_libraries(): array {
     return $js_libs_manager_libraries;
 }
 
+
 /**
- * Auto-create taxonomy terms for each library.
+ * Auto-create taxonomy terms for each library using full labels.
  *
- * Runs on plugin activation or when a new library is added.
+ * Uses the library's label as the display name and a sanitized version as the slug.
+ * This ensures "Most Used" and autocomplete show the full human-readable name.
  */
 function create_library_taxonomy_terms() {
     $libraries = get_registered_libraries();
 
-    foreach ( $libraries as $slug => $lib ) {
-        $term_name = $lib['label'];
-        $term_slug = $slug;
+    foreach ( $libraries as $original_slug => $lib ) {
+        $term_name = $lib['label']; // e.g., "GSAP (with ScrollTrigger)"
 
-        // Optional: allow custom taxonomy slug
+        // Generate safe slug from label
+        $term_slug = sanitize_title( $term_name ); // "gsap-with-scrolltrigger"
+
+        // Allow override via 'taxonomy_slug' (optional)
         if ( ! empty( $lib['taxonomy_slug'] ) ) {
-            $term_slug = $lib['taxonomy_slug'];
+            $term_slug = sanitize_title( $lib['taxonomy_slug'] );
         }
 
+        // Check by slug to avoid duplicates
         if ( ! term_exists( $term_slug, 'js_library' ) ) {
-            wp_insert_term(
+            $result = wp_insert_term(
                 $term_name,
                 'js_library',
                 [
@@ -108,6 +113,11 @@ function create_library_taxonomy_terms() {
                     ),
                 ]
             );
+
+            // Optional: log errors in debug mode
+            if ( is_wp_error( $result ) && WP_DEBUG ) {
+                error_log( 'JS Libs Manager: Failed to create term "' . $term_name . '": ' . $result->get_error_message() );
+            }
         }
     }
 }
@@ -124,3 +134,32 @@ add_action( 'admin_init', function() {
         update_option( 'js_libs_manager_terms_synced', JS_LIBS_MANAGER_VERSION );
     }
 });
+
+/**
+ * Replace "Most Used" term names with full labels.
+ */
+add_filter( 'get_terms', function( $terms, $taxonomies, $args ) {
+    if ( ! is_admin() || ! in_array( 'js_library', (array) $taxonomies, true ) ) {
+        return $terms;
+    }
+
+    // Only modify when fetching most used
+    if ( ! empty( $args['fields'] ) && $args['fields'] === 'ids' ) {
+        return $terms;
+    }
+
+    foreach ( $terms as $term ) {
+        if ( isset( $term->name ) && isset( $term->slug ) ) {
+            $libraries = \JS_Libs_Manager\get_registered_libraries();
+            foreach ( $libraries as $lib ) {
+                $expected_slug = sanitize_title( $lib['label'] );
+                if ( $term->slug === $expected_slug ) {
+                    $term->name = $lib['label'];
+                    break;
+                }
+            }
+        }
+    }
+
+    return $terms;
+}, 10, 3 );
