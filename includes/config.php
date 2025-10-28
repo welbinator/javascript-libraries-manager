@@ -62,6 +62,11 @@ $js_libs_manager_libraries = [
         'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_embla',
         'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/embla.php',
     ],
+    'sortable' => [
+        'label'            => __( 'Sortable.js', 'js-libs-manager' ),
+        'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_sortable',
+        'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/sortable.php',
+    ],
 ];
 
 /**
@@ -169,3 +174,12 @@ add_filter( 'get_terms', function( $terms, $taxonomies, $args ) {
     return $terms;
 }, 10, 3 );
 
+// Add to config.php temporarily
+// add_action('admin_init', function() {
+//     if (isset($_GET['recreate_terms'])) {
+//         $terms = get_terms(['taxonomy' => 'js_library', 'hide_empty' => false, 'fields' => 'ids']);
+//         foreach ($terms as $id) wp_delete_term($id, 'js_library');
+//         create_library_taxonomy_terms();
+//         wp_die('Terms recreated');
+//     }
+// });

@@ -45,7 +45,7 @@ function enqueue_enabled_libraries() {
 
     $libs_to_load = [];
 
-   foreach ( $all_libs as $slug => $lib ) {
+  foreach ( $all_libs as $slug => $lib ) {
     $callback = $lib['enqueue_callback'] ?? null;
     if ( ! is_callable( $callback ) ) {
         continue;
@@ -53,14 +53,16 @@ function enqueue_enabled_libraries() {
 
     $should_load = false;
 
-    // Rule 1: Global ON → always load
+    // Global ON → load
     if ( in_array( $slug, (array) $global_libs, true ) ) {
         $should_load = true;
     }
-    // Rule 2: Global OFF → load only if per-page term slug matches sanitized label
-    elseif ( empty( $global_libs ) ) {
-        $term_slug = sanitize_title( $lib['label'] ); // e.g., "embla-carousel-with-css"
-        if ( in_array( $term_slug, $post_libs, true ) ) {
+    // Global OFF → check per-page
+    elseif ( empty( $global_libs ) && is_singular() ) {
+        $term_slug = sanitize_title( $lib['label'] ); // "sortable-js"
+        $post_terms = wp_get_post_terms( get_the_ID(), 'js_library', [ 'fields' => 'slugs' ] );
+        if ( is_wp_error( $post_terms ) ) $post_terms = [];
+        if ( in_array( $term_slug, $post_terms, true ) ) {
             $should_load = true;
         }
     }
