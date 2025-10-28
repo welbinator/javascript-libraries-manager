@@ -57,12 +57,10 @@ function enqueue_enabled_libraries() {
     if ( in_array( $slug, (array) $global_libs, true ) ) {
         $should_load = true;
     }
-    // Global OFF → check per-page
-    elseif ( empty( $global_libs ) && is_singular() ) {
+    // Global OFF → check per-page for this specific library
+    elseif ( is_singular() ) {
         $term_slug = sanitize_title( $lib['label'] ); // "sortable-js"
-        $post_terms = wp_get_post_terms( get_the_ID(), 'js_library', [ 'fields' => 'slugs' ] );
-        if ( is_wp_error( $post_terms ) ) $post_terms = [];
-        if ( in_array( $term_slug, $post_terms, true ) ) {
+        if ( in_array( $term_slug, (array) $post_libs, true ) ) {
             $should_load = true;
         }
     }

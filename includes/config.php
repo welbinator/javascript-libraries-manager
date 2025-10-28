@@ -67,6 +67,11 @@ $js_libs_manager_libraries = [
         'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_sortable',
         'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/sortable.php',
     ],
+    'fontawesome' => [
+        'label'            => __( 'Font Awesome (Kit)', 'js-libs-manager' ),
+        'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_fontawesome',
+        'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/fontawesome.php',
+    ],
 ];
 
 /**
@@ -174,7 +179,8 @@ add_filter( 'get_terms', function( $terms, $taxonomies, $args ) {
     return $terms;
 }, 10, 3 );
 
-// Add to config.php temporarily
+// to use this, visit /wp-admin/options-general.php?recreate_terms=1
+
 // add_action('admin_init', function() {
 //     if (isset($_GET['recreate_terms'])) {
 //         $terms = get_terms(['taxonomy' => 'js_library', 'hide_empty' => false, 'fields' => 'ids']);
