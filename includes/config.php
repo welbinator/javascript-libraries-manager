@@ -143,9 +143,33 @@ register_activation_hook( JS_LIBS_MANAGER_PLUGIN_PATH . 'js-libs-manager.php', _
 /**
  * Optional: Re-sync terms on save (e.g., when adding new library in code)
  */
+/**
+ * Auto-detect changes to the registered libraries and re-create missing terms.
+ *
+ * Previously this compared against the plugin version which required bumping
+ * the version to trigger a resync. Instead we compute a signature of the
+ * registered libraries (labels + optional taxonomy_slug) and store it. When
+ * the signature changes we create any missing terms without deleting existing
+ * terms (safe default).
+ */
 add_action( 'admin_init', function() {
-    if ( get_option( 'js_libs_manager_terms_synced' ) !== JS_LIBS_MANAGER_VERSION ) {
+    $libraries = get_registered_libraries();
+
+    // Build a compact signature from labels + taxonomy_slug (if present).
+    $parts = array_map( function( $lib ) {
+        return ($lib['label'] ?? '') . '|' . ($lib['taxonomy_slug'] ?? '');
+    }, $libraries );
+
+    $signature = md5( serialize( $parts ) );
+    $stored    = get_option( 'js_libs_manager_libraries_signature' );
+
+    if ( $stored !== $signature ) {
+        // Only create missing terms — do not delete existing terms so we
+        // preserve user term assignments.
         create_library_taxonomy_terms();
+
+        // Persist signature and a terms_synced marker (for compatibility).
+        update_option( 'js_libs_manager_libraries_signature', $signature );
         update_option( 'js_libs_manager_terms_synced', JS_LIBS_MANAGER_VERSION );
     }
 });
@@ -181,11 +205,35 @@ add_filter( 'get_terms', function( $terms, $taxonomies, $args ) {
 
 // to use this, visit /wp-admin/options-general.php?recreate_terms=1
 
-// add_action('admin_init', function() {
-//     if (isset($_GET['recreate_terms'])) {
-//         $terms = get_terms(['taxonomy' => 'js_library', 'hide_empty' => false, 'fields' => 'ids']);
-//         foreach ($terms as $id) wp_delete_term($id, 'js_library');
-//         create_library_taxonomy_terms();
-//         wp_die('Terms recreated');
-//     }
-// });
+add_action('admin_init', function() {
+    if ( isset( $_GET['recreate_terms'] ) ) {
+        // Ensure only admins can invoke this.
+        if ( ! current_user_can( 'manage_options' ) ) {
+            wp_die( esc_html__( 'Unauthorized', 'js-libs-manager' ), '', 403 );
+        }
+
+        // If ?recreate_terms=1&force=1 then delete all existing terms first.
+        $force = isset( $_GET['force'] ) && $_GET['force'] === '1';
+
+        if ( $force ) {
+            $terms = get_terms( [ 'taxonomy' => 'js_library', 'hide_empty' => false, 'fields' => 'ids' ] );
+            foreach ( (array) $terms as $id ) {
+                wp_delete_term( $id, 'js_library' );
+            }
+        }
+
+        // Create missing terms (safe). If force was used terms were deleted
+        // above so this will re-create them.
+        create_library_taxonomy_terms();
+
+        // Update signature so automatic resync doesn't immediately re-run.
+        $libraries = get_registered_libraries();
+        $parts     = array_map( function( $lib ) {
+            return ($lib['label'] ?? '') . '|' . ($lib['taxonomy_slug'] ?? '');
+        }, $libraries );
+        $signature = md5( serialize( $parts ) );
+        update_option( 'js_libs_manager_libraries_signature', $signature );
+
+        wp_die( 'Terms recreated' . ( $force ? ' (force delete used)' : '' ) );
+    }
+});
