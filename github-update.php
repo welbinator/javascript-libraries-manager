@@ -1,10 +1,5 @@
 <?php
-/**
- * Plugin Name: JavaScript Libraries Manager – Update Checker
- *
- * @package   JS_Libs_Manager
- * @since     1.1.2
- */
+
 
 namespace JS_Libs_Manager;
 

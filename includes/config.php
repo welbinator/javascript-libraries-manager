@@ -72,6 +72,11 @@ $js_libs_manager_libraries = [
         'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_fontawesome',
         'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/fontawesome.php',
     ],
+        'aos' => [
+        'label'            => __( 'AOS (Animate On Scroll)', 'js-libs-manager' ),
+        'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_aos',
+        'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/aos.php',
+    ],
 ];
 
 /**
