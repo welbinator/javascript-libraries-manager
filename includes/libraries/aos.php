@@ -7,9 +7,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 /**
- * Enqueue AOS (Animate On Scroll) CSS + JS.
+ * Enqueue AOS (CSS + JS) from unpkg.
  *
- * Exposes global `AOS` object.
+ * Users will initialize AOS themselves with their own JS.
  */
 function js_libs_manager_enqueue_aos() {
     // AOS CSS
@@ -26,20 +26,13 @@ function js_libs_manager_enqueue_aos() {
         'https://unpkg.com/aos@2.3.1/dist/aos.js',
         array(),
         '2.3.1',
-        true // Load in footer
+        true
     );
 
-    // Expose global AOS (required for init)
+    // Expose global AOS for user scripts
     wp_add_inline_script(
         'js-libs-manager-aos',
         'window.AOS = AOS;',
-        'after'
-    );
-
-    // Initialize AOS after load
-    wp_add_inline_script(
-        'js-libs-manager-aos',
-        'document.addEventListener("DOMContentLoaded", () => { if (typeof AOS !== "undefined") AOS.init(); });',
         'after'
     );
 }
