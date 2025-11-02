@@ -42,6 +42,11 @@ $js_libs_manager_libraries = [
         'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_anime',
         'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/anime.php',
     ],
+    'a11y-dialog' => [
+        'label'            => __( 'A11y Dialog', 'js-libs-manager' ),
+        'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_a11y_dialog',
+        'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/a11y-dialog.php',
+    ],
     'chartjs' => [
         'label'            => __( 'Chart.js', 'js-libs-manager' ),
         'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_chartjs',
