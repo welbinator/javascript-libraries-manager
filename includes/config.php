@@ -82,6 +82,11 @@ $js_libs_manager_libraries = [
         'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_aos',
         'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/aos.php',
     ],
+    'micromodal' => [
+        'label'            => __( 'MicroModal', 'js-libs-manager' ),
+        'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_micromodal',
+        'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/micromodal.php',
+    ],
 ];
 
 /**
