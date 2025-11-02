@@ -99,7 +99,7 @@ function check_for_updates( $transient ) {
     // ------------------------------------------------------------------
     // __FILE__ points to the main plugin file (js-libs-manager.php) because
     // this file is included from there.
-    $plugin_file = JS_LIBS_MANAGER_PLUGIN_PATH . 'js-libs-manager.php';
+    $plugin_file = JS_LIBS_MANAGER_PLUGIN_PATH . 'javascript-libraries-manager.php';
     $plugin_slug = plugin_basename( $plugin_file );
 
     if ( ! function_exists( 'get_plugin_data' ) ) {
