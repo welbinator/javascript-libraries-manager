@@ -39,7 +39,7 @@ function check_for_updates( $transient ) {
     // 2. GitHub repository details
     // ------------------------------------------------------------------
     // Change these if you host the plugin in a different repo.
-    $owner = 'xAI';
+    $owner = 'welbinator';
     $repo  = 'javascript-libraries-manager';
 
     // ------------------------------------------------------------------
