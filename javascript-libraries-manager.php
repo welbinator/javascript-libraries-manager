@@ -4,8 +4,8 @@
  * Plugin URI:  https://example.com/js-libs-manager
  * Description: A simple WordPress plugin to manage and enqueue various JavaScript libraries (GSAP, Swiper, Popper, etc.).
  * Version:     1.1.3
- * Author:      Your Name
- * Author URI:  https://example.com
+ * Author:      James Welbes
+ * Author URI:  https://jameswelbes.com
  * License:     GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: js-libs-manager
