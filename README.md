@@ -59,50 +59,6 @@ ScrollTrigger.create({
 });
 ```
 
-## For Developers
-
-### Adding a New Library
-
-1. Add the library definition in `includes/config.php`:
-```php
-'my-lib' => [
-    'label'            => __( 'My Library', 'js-libs-manager' ),
-    'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_mylib',
-    'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/mylib.php',
-],
-```
-
-2. Create `includes/libraries/mylib.php`:
-```php
-<?php
-namespace JS_Libs_Manager;
-
-if ( ! defined( 'ABSPATH' ) ) {
-    exit;
-}
-
-function js_libs_manager_enqueue_mylib() {
-    wp_enqueue_script(
-        'js-libs-manager-mylib',
-        'https://cdn.example.com/mylib.min.js',
-        array(),
-        JS_LIBS_MANAGER_VERSION,
-        true
-    );
-}
-```
-
-The library will automatically appear in the admin UI and be available for site-wide or per-page enabling.
-
-### Library Files Pattern
-
-- Use CDN URLs with pinned versions to avoid breaking changes
-- Load scripts in footer by default (`true` as last param to `wp_enqueue_script`)
-- For UMD builds that need global exposure, use:
-```php
-wp_add_inline_script( 'handle', 'window.MyLib = MyLib;', 'after' );
-```
-
 ## Advanced Usage
 
 ### Recreating Taxonomy Terms
