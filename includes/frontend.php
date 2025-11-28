@@ -80,7 +80,7 @@ add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_enabled_libraries',
 /**
  * Enqueue libraries into Etch Builder Preview canvas.
  *
- * Only enqueues globally-enabled libraries when the Etch option is enabled.
+ * Enqueues both globally-enabled libraries and per-page selections when Etch option is enabled.
  */
 function enqueue_etch_canvas_libraries() {
     // Check if Etch enqueuing is enabled
@@ -90,10 +90,21 @@ function enqueue_etch_canvas_libraries() {
 
     $all_libs    = get_registered_libraries();
     $global_libs = get_option( 'js_libs_manager_enabled_libs', [] );
+    $page_libs   = [];
+    
+    // Get per-page Etch preview selections
+    $post_id = get_the_ID();
+    if ( $post_id ) {
+        $page_libs = get_post_meta( $post_id, '_js_libs_manager_etch_preview', true );
+        $page_libs = is_array( $page_libs ) ? $page_libs : [];
+    }
+    
+    // Merge global and per-page selections (unique)
+    $libs_to_load = array_unique( array_merge( (array) $global_libs, $page_libs ) );
 
-    // Only enqueue globally-enabled libraries
+    // Enqueue selected libraries
     foreach ( $all_libs as $slug => $lib ) {
-        if ( ! in_array( $slug, (array) $global_libs, true ) ) {
+        if ( ! in_array( $slug, $libs_to_load, true ) ) {
             continue;
         }
 
@@ -109,7 +120,7 @@ add_action( 'etch/canvas/enqueue_assets', __NAMESPACE__ . '\\enqueue_etch_canvas
 /**
  * Add stylesheets to Etch Builder Preview canvas.
  *
- * Collects CSS files from globally-enabled libraries and adds them to Etch.
+ * Collects CSS files from globally-enabled libraries and per-page selections.
  */
 function add_etch_canvas_stylesheets( $stylesheets ) {
     // Check if Etch enqueuing is enabled
@@ -119,10 +130,21 @@ function add_etch_canvas_stylesheets( $stylesheets ) {
 
     $all_libs    = get_registered_libraries();
     $global_libs = get_option( 'js_libs_manager_enabled_libs', [] );
+    $page_libs   = [];
+    
+    // Get per-page Etch preview selections
+    $post_id = get_the_ID();
+    if ( $post_id ) {
+        $page_libs = get_post_meta( $post_id, '_js_libs_manager_etch_preview', true );
+        $page_libs = is_array( $page_libs ) ? $page_libs : [];
+    }
+    
+    // Merge global and per-page selections (unique)
+    $libs_to_load = array_unique( array_merge( (array) $global_libs, $page_libs ) );
 
-    // Collect registered styles from globally-enabled libraries
+    // Collect registered styles from selected libraries
     foreach ( $all_libs as $slug => $lib ) {
-        if ( ! in_array( $slug, (array) $global_libs, true ) ) {
+        if ( ! in_array( $slug, $libs_to_load, true ) ) {
             continue;
         }
 

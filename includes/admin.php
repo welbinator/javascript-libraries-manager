@@ -128,6 +128,94 @@ function admin_menu() {
 add_action( 'admin_menu', __NAMESPACE__ . '\\admin_menu' );
 
 /**
+ * Register meta box for Etch preview library selection.
+ */
+function add_etch_preview_meta_box() {
+    add_meta_box(
+        'js_libs_manager_etch_preview',
+        __( 'Etch Preview - JS Libraries', 'js-libs-manager' ),
+        __NAMESPACE__ . '\\render_etch_preview_meta_box',
+        ['post', 'page'],
+        'side',
+        'default'
+    );
+}
+add_action( 'add_meta_boxes', __NAMESPACE__ . '\\add_etch_preview_meta_box' );
+
+/**
+ * Render the Etch preview meta box.
+ */
+function render_etch_preview_meta_box( $post ) {
+    wp_nonce_field( 'js_libs_manager_etch_preview_nonce', 'js_libs_manager_etch_preview_nonce' );
+    
+    $libraries = get_registered_libraries();
+    $selected  = get_post_meta( $post->ID, '_js_libs_manager_etch_preview', true );
+    $selected  = is_array( $selected ) ? $selected : [];
+    
+    ?>
+    <p class="description">
+        <?php esc_html_e( 'Select libraries to load in the Etch builder preview for this page.', 'js-libs-manager' ); ?>
+    </p>
+    <div style="max-height: 300px; overflow-y: auto;">
+        <?php foreach ( $libraries as $key => $lib ) : ?>
+            <label style="display: block; margin: 8px 0;">
+                <input
+                    type="checkbox"
+                    name="js_libs_manager_etch_preview[]" 
+                    value="<?php echo esc_attr( $key ); ?>"
+                    <?php checked( in_array( $key, $selected, true ) ); ?>
+                >
+                <?php echo esc_html( $lib['label'] ); ?>
+            </label>
+        <?php endforeach; ?>
+    </div>
+    <p class="description" style="margin-top: 10px;">
+        <?php esc_html_e( 'Note: Global Etch setting must be enabled in Settings → JS Libraries.', 'js-libs-manager' ); ?>
+    </p>
+    <?php
+}
+
+/**
+ * Save Etch preview library selections.
+ */
+function save_etch_preview_meta( $post_id ) {
+    // Security checks
+    if ( ! isset( $_POST['js_libs_manager_etch_preview_nonce'] ) ) {
+        return;
+    }
+    
+    if ( ! wp_verify_nonce( $_POST['js_libs_manager_etch_preview_nonce'], 'js_libs_manager_etch_preview_nonce' ) ) {
+        return;
+    }
+    
+    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+        return;
+    }
+    
+    if ( ! current_user_can( 'edit_post', $post_id ) ) {
+        return;
+    }
+    
+    // Sanitize and save
+    $libraries     = get_registered_libraries();
+    $allowed_keys  = array_keys( $libraries );
+    $selected      = isset( $_POST['js_libs_manager_etch_preview'] ) ? $_POST['js_libs_manager_etch_preview'] : [];
+    $sanitized     = [];
+    
+    if ( is_array( $selected ) ) {
+        foreach ( $selected as $lib ) {
+            $lib = sanitize_key( $lib );
+            if ( in_array( $lib, $allowed_keys, true ) ) {
+                $sanitized[] = $lib;
+            }
+        }
+    }
+    
+    update_post_meta( $post_id, '_js_libs_manager_etch_preview', array_unique( $sanitized ) );
+}
+add_action( 'save_post', __NAMESPACE__ . '\\save_etch_preview_meta' );
+
+/**
  * Render the settings page.
  */
 function render_settings_page() {
