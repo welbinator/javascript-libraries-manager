@@ -126,6 +126,51 @@ function enqueue_etch_canvas_libraries() {
 add_action( 'etch/canvas/enqueue_assets', __NAMESPACE__ . '\\enqueue_etch_canvas_libraries' );
 
 /**
+ * Add Font Awesome script tag directly to Etch canvas head.
+ * 
+ * Font Awesome kits load CSS dynamically, so they need to be in the head
+ * and can't rely on standard WordPress enqueue system in Etch context.
+ */
+function add_fontawesome_to_etch_head() {
+    // Check if Etch enqueuing is enabled
+    if ( ! get_option( 'js_libs_manager_enqueue_in_etch', false ) ) {
+        return;
+    }
+    
+    $all_libs    = get_registered_libraries();
+    $global_libs = get_option( 'js_libs_manager_enabled_libs', [] );
+    $page_lib_slugs = [];
+    
+    // Get per-page libraries from js_library taxonomy if Etch preview is enabled for this page
+    $post_id = get_the_ID();
+    if ( $post_id && get_post_meta( $post_id, '_js_libs_manager_etch_preview_enabled', true ) === '1' ) {
+        $post_terms = wp_get_post_terms( $post_id, 'js_library', [ 'fields' => 'slugs' ] );
+        if ( ! is_wp_error( $post_terms ) ) {
+            // Convert taxonomy term slugs back to library keys
+            foreach ( $all_libs as $slug => $lib ) {
+                $term_slug = sanitize_title( $lib['label'] );
+                if ( in_array( $term_slug, (array) $post_terms, true ) ) {
+                    $page_lib_slugs[] = $slug;
+                }
+            }
+        }
+    }
+    
+    // Merge global and per-page selections
+    $libs_to_load = array_unique( array_merge( (array) $global_libs, $page_lib_slugs ) );
+    
+    // Check if Font Awesome should be loaded
+    if ( in_array( 'fontawesome', $libs_to_load, true ) ) {
+        $kit = get_option( 'js_libs_manager_fontawesome_kit', '' );
+        if ( ! empty( $kit ) ) {
+            echo '<script src="' . esc_url( $kit ) . '" crossorigin="anonymous"></script>' . "\n";
+        }
+    }
+}
+
+add_action( 'wp_head', __NAMESPACE__ . '\\add_fontawesome_to_etch_head', 1 );
+
+/**
  * Add stylesheets to Etch Builder Preview canvas.
  *
  * Collects CSS files from globally-enabled libraries and per-page js_library taxonomy terms.
