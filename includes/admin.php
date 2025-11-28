@@ -30,6 +30,17 @@ function register_settings() {
             'default'           => '',
         ]
     );
+
+    // Etch Builder Preview option
+    register_setting(
+        'js_libs_manager_options',
+        'js_libs_manager_enqueue_in_etch',
+        [
+            'type'              => 'boolean',
+            'sanitize_callback' => 'rest_sanitize_boolean',
+            'default'           => false,
+        ]
+    );
 }
 add_action( 'admin_init', __NAMESPACE__ . '\\register_settings' );
 
@@ -184,6 +195,30 @@ function render_settings_page() {
 
                             <p class="description">
                                 <?php esc_html_e( 'Select the JavaScript libraries you want to enqueue on the frontend.', 'js-libs-manager' ); ?>
+                            </p>
+                        </fieldset>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <?php esc_html_e( 'Etch Builder', 'js-libs-manager' ); ?>
+                    </th>
+                    <td>
+                        <fieldset>
+                            <legend class="screen-reader-text">
+                                <?php esc_html_e( 'Etch Builder Preview Settings', 'js-libs-manager' ); ?>
+                            </legend>
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    name="js_libs_manager_enqueue_in_etch"
+                                    value="1"
+                                    <?php checked( get_option( 'js_libs_manager_enqueue_in_etch', false ), true ); ?>
+                                >
+                                <?php esc_html_e( 'Enqueue these scripts into the Etch Builder Preview', 'js-libs-manager' ); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e( 'When enabled, globally-enabled libraries will be loaded in the Etch page builder preview canvas.', 'js-libs-manager' ); ?>
                             </p>
                         </fieldset>
                     </td>

@@ -76,3 +76,82 @@ function enqueue_enabled_libraries() {
 }
 
 add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_enabled_libraries', 20 );
+
+/**
+ * Enqueue libraries into Etch Builder Preview canvas.
+ *
+ * Only enqueues globally-enabled libraries when the Etch option is enabled.
+ */
+function enqueue_etch_canvas_libraries() {
+    // Check if Etch enqueuing is enabled
+    if ( ! get_option( 'js_libs_manager_enqueue_in_etch', false ) ) {
+        return;
+    }
+
+    $all_libs    = get_registered_libraries();
+    $global_libs = get_option( 'js_libs_manager_enabled_libs', [] );
+
+    // Only enqueue globally-enabled libraries
+    foreach ( $all_libs as $slug => $lib ) {
+        if ( ! in_array( $slug, (array) $global_libs, true ) ) {
+            continue;
+        }
+
+        $callback = $lib['enqueue_callback'] ?? null;
+        if ( is_callable( $callback ) ) {
+            call_user_func( $callback );
+        }
+    }
+}
+
+add_action( 'etch/canvas/enqueue_assets', __NAMESPACE__ . '\\enqueue_etch_canvas_libraries' );
+
+/**
+ * Add stylesheets to Etch Builder Preview canvas.
+ *
+ * Collects CSS files from globally-enabled libraries and adds them to Etch.
+ */
+function add_etch_canvas_stylesheets( $stylesheets ) {
+    // Check if Etch enqueuing is enabled
+    if ( ! get_option( 'js_libs_manager_enqueue_in_etch', false ) ) {
+        return $stylesheets;
+    }
+
+    $all_libs    = get_registered_libraries();
+    $global_libs = get_option( 'js_libs_manager_enabled_libs', [] );
+
+    // Collect registered styles from globally-enabled libraries
+    foreach ( $all_libs as $slug => $lib ) {
+        if ( ! in_array( $slug, (array) $global_libs, true ) ) {
+            continue;
+        }
+
+        // Trigger the enqueue callback to register styles
+        $callback = $lib['enqueue_callback'] ?? null;
+        if ( is_callable( $callback ) ) {
+            call_user_func( $callback );
+        }
+    }
+
+    // Now collect all registered styles and add to Etch
+    global $wp_styles;
+    if ( ! isset( $wp_styles ) ) {
+        return $stylesheets;
+    }
+
+    foreach ( $wp_styles->registered as $handle => $style ) {
+        // Only include styles registered by this plugin
+        if ( strpos( $handle, 'js-libs-manager-' ) !== 0 ) {
+            continue;
+        }
+
+        $stylesheets[] = [
+            'id'  => $handle,
+            'url' => $style->src,
+        ];
+    }
+
+    return $stylesheets;
+}
+
+add_filter( 'etch/canvas/additional_stylesheets', __NAMESPACE__ . '\\add_etch_canvas_stylesheets' );
