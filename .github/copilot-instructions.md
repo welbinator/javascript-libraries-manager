@@ -1,45 +1,152 @@
-Project: JavaScript Libraries Manager (WordPress plugin)
+# JavaScript Libraries Manager - AI Agent Instructions
 
-Quick orientation
-- Main entry: `javascript-libraries-manager.php` — defines constants, registers `js_library` taxonomy and includes the files under `includes/`.
-- Config & registry: `includes/config.php` holds the library registry ($js_libs_manager_libraries). Each library has a `label`, `enqueue_callback` and `file` path.
-- Admin UI: `includes/admin.php` exposes a settings page and stores enabled libs in the `js_libs_manager_enabled_libs` option.
-- Frontend: `includes/frontend.php` decides which libraries to enqueue (global settings first, per-page taxonomy second) and calls the library enqueue callbacks.
-- Library implementations: `includes/libraries/*.php` — each file registers scripts/styles with `wp_enqueue_script`/`wp_enqueue_style` and commonly uses `wp_add_inline_script(..., 'after')` to expose globals (e.g. `window.Swiper = Swiper;`).
-- Update helper: `github-update.php` hooks `pre_set_site_transient_update_plugins` and queries GitHub Releases — update `$owner`/`$repo` if you fork.
+## Architecture Overview
 
-Why the structure matters
-- The project uses a small, procedural, namespaced architecture (namespace `JS_Libs_Manager`). There are no classes — contributors should add namespaced functions.
-- `config.php` is the single source of truth for which libraries exist. To add a library, register it in the array there and create the file referenced by `file`.
-- The frontend decision flow is intentional: global settings override per-page taxonomy selection. Keep that order when changing logic.
+This WordPress plugin manages JavaScript library loading through a procedural, namespaced PHP architecture. No classes—only functions in the `JS_Libs_Manager` namespace.
 
-Conventions & patterns to follow
-- Namespacing: use `JS_Libs_Manager\\function_name` or declare `namespace JS_Libs_Manager;` at top of files.
-- Function names: `js_libs_manager_enqueue_<slug>()` for enqueue callbacks. The registry expects `enqueue_callback` to be callable.
-- Handles & constants: use plugin-prefixed handles like `js-libs-manager-<name>` and `JS_LIBS_MANAGER_VERSION` for script versions.
-- Inline scripts: many libraries rely on `wp_add_inline_script(..., 'after')` to expose UMD globals — preserve the 'after' placement unless you fully understand the module's build.
-- Files: add library code in `includes/libraries/` and reference it from `includes/config.php`.
+**Core Data Flow:**
+1. **Registry** (`config.php`) → defines available libraries with `label`, `enqueue_callback`, `file`
+2. **Admin UI** (`admin.php`) → saves global settings to `js_libs_manager_enabled_libs` option
+3. **Taxonomy** (`js_library`) → allows per-post/page library selection via editor sidebar
+4. **Frontend** (`frontend.php`) → reads global settings + post terms, calls enqueue callbacks
+5. **Library files** (`includes/libraries/*.php`) → each implements an enqueue function
 
-Developer workflows & tests (manual)
-- No build step in repo — this is a PHP WordPress plugin.
-- To test locally: copy the plugin folder into a WP install `wp-content/plugins/`, activate the plugin, visit Settings → "JS Libraries" to toggle global libs, and open a post/page and add the `js_library` term to test per-page loading.
-- Debugging: enable `WP_DEBUG` to surface errors and check `error_log` (some functions log on WP_DEBUG). Use browser devtools to confirm scripts/styles loaded and globals (e.g., `window.Swiper`).
-- Update check: `github-update.php` calls the GitHub API; if you host elsewhere, change `$owner` and `$repo`.
+**Critical Decision Logic** (in `enqueue_enabled_libraries()`):
+- Global setting enabled → load site-wide (priority 1)
+- Global disabled + post has taxonomy term → load only on that page (priority 2)
+- This order is intentional—don't reverse it without understanding site-wide impact
 
-Integration points & gotchas
-- Taxonomy slug generation: `create_library_taxonomy_terms()` uses the human-readable `label` to create term slugs via `sanitize_title()` — avoid expecting library keys (like `gsap`) to be the term slug.
-- Per-page checks in `frontend.php` compare sanitized label slugs against post terms — if you change labels, existing terms may mismatch; use the optional term re-sync logic in `config.php` when changing labels.
-- CDN versions are hardcoded in library files. Update with care and pin versions to avoid breaking changes.
+## File Map
 
-Examples (where to change things)
-- Add a new lib: edit `includes/config.php` (add entry) + create `includes/libraries/<name>.php` with a `js_libs_manager_enqueue_<name>()` function that calls `wp_enqueue_script` and (if needed) `wp_add_inline_script(..., 'after')`.
-- Expose a global: in a library file, after enqueuing a UMD script do `wp_add_inline_script( 'handle', 'window.MyLib = MyLib;', 'after' );`
-- Change update repo: edit `github-update.php` and replace `$owner` and `$repo`.
+```
+javascript-libraries-manager.php  # Entry: constants, taxonomy registration, includes
+includes/
+  config.php                      # $js_libs_manager_libraries array + term creation
+  admin.php                       # Settings page, option sanitization
+  frontend.php                    # Enqueue decision logic (wp_enqueue_scripts hook)
+  libraries/
+    swiper.php                    # Example: CSS + JS + window.Swiper = Swiper
+    gsap.php                      # Example: multiple scripts with dependencies
+    fontawesome.php               # Example: user-provided kit URL
+github-update.php                 # GitHub Releases update checker
+```
 
-What NOT to change lightly
-- The enqueue decision order in `includes/frontend.php` (global first, then per-page). Changing this will alter site-wide behavior.
-- The taxonomy term creation logic if you rely on existing term slugs in content; prefer re-sync with `get_option('js_libs_manager_terms_synced')` guarded code.
+## Adding a New Library (Step-by-Step)
 
-If anything is ambiguous or you'd like sample PRs (e.g., adding a new library), tell me which library to add and I'll produce the minimal code changes.
+1. **Create library file** at `includes/libraries/mylibrary.php`:
+```php
+<?php
+namespace JS_Libs_Manager;
 
-Last updated: auto-generated — please review and tell me any missing examples or workflows you want included.
+if ( ! defined( 'ABSPATH' ) ) {
+    exit;
+}
+
+function js_libs_manager_enqueue_mylibrary() {
+    wp_enqueue_script(
+        'js-libs-manager-mylibrary',
+        'https://cdn.example.com/mylibrary@1.0.0/dist/mylibrary.min.js',
+        array(),
+        JS_LIBS_MANAGER_VERSION,
+        true
+    );
+    
+    // CRITICAL: Use 'after' position to expose UMD globals after script loads
+    wp_add_inline_script(
+        'js-libs-manager-mylibrary',
+        'window.MyLibrary = MyLibrary;',
+        'after'  // ← Must be 'after', not 'before'
+    );
+}
+```
+
+2. **Register in `config.php`** (`$js_libs_manager_libraries` array):
+```php
+'mylibrary' => [
+    'label'            => __( 'My Library', 'js-libs-manager' ),
+    'enqueue_callback' => __NAMESPACE__ . '\\js_libs_manager_enqueue_mylibrary',
+    'file'             => JS_LIBS_MANAGER_PLUGIN_PATH . 'includes/libraries/mylibrary.php',
+],
+```
+
+3. **Test**: Taxonomy terms auto-create on `admin_init` via signature change detection. Visit Settings → JS Libraries to verify checkbox appears.
+
+## Critical Patterns
+
+### Taxonomy Term Generation
+- Terms are created from `label` (not array key), e.g., `'GSAP (with ScrollTrigger)'` → slug `'gsap-with-scrolltrigger'`
+- `frontend.php` matches post terms against `sanitize_title( $lib['label'] )`
+- **Gotcha**: Changing a label breaks existing post associations—use `?recreate_terms=1` carefully
+
+### Inline Script Position (`'after'` is critical)
+Most libraries are UMD bundles that define globals at the end of execution. Using `'before'` will fail:
+```php
+// ✅ Correct - global exists after script runs
+wp_add_inline_script( 'handle', 'window.Swiper = Swiper;', 'after' );
+
+// ❌ Wrong - global doesn't exist yet
+wp_add_inline_script( 'handle', 'window.Swiper = Swiper;', 'before' );
+```
+
+### Script Dependencies
+See `gsap.php` for multi-script pattern:
+```php
+wp_enqueue_script( 'gsap-js', '...gsap.min.js', array(), ... );
+wp_enqueue_script( 'gsap-st', '...ScrollTrigger.min.js', array('gsap-js'), ... );
+// ↑ ScrollTrigger depends on GSAP core
+```
+
+### Font Awesome Special Case
+- User provides kit URL via admin input field
+- Stored in separate option: `js_libs_manager_fontawesome_kit`
+- Enqueued in `<head>` (not footer) with `crossorigin="anonymous"` attribute
+- See `fontawesome.php` and `admin.php` for full implementation
+
+## Testing Workflows
+
+**Manual Testing (no automated tests exist):**
+1. Install in `wp-content/plugins/` and activate
+2. Enable `WP_DEBUG` in `wp-config.php` to see `error_log()` messages
+3. Test global loading: Settings → JS Libraries → check library → visit frontend → DevTools Console: type `window.LibraryName`
+4. Test per-page: Edit post → JS Libraries panel → select term → visit post → verify library loaded only there
+5. Verify globals exposed: all libraries should be accessible via `window.LibraryName` pattern
+
+**Debug Term Issues:**
+- Visit `wp-admin/options-general.php?recreate_terms=1` (safe, creates missing terms)
+- Force delete and recreate: `?recreate_terms=1&force=1` (destructive, backs up first!)
+
+## Naming Conventions
+
+- **Functions**: `js_libs_manager_enqueue_<slug>()`
+- **Script handles**: `js-libs-manager-<name>` (use hyphens)
+- **Option names**: `js_libs_manager_<name>` (use underscores)
+- **Taxonomy**: `js_library` (singular, for posts/pages)
+- **Namespace**: `JS_Libs_Manager` (all new functions must use this)
+
+## GitHub Update System
+
+`github-update.php` hooks `pre_set_site_transient_update_plugins` to check for releases:
+- Queries `https://api.github.com/repos/welbinator/javascript-libraries-manager/releases/latest`
+- Compares `tag_name` (minus `v` prefix) against `JS_LIBS_MANAGER_VERSION`
+- If newer, adds update to transient using first asset's `browser_download_url`
+- **Fork maintainers**: Update `$owner` and `$repo` variables in `check_for_updates()`
+
+## Common Pitfalls
+
+1. **Using library array key as taxonomy slug** — Don't. Frontend uses `sanitize_title( $lib['label'] )` not the key.
+2. **Forgetting namespace** — All functions must be in `JS_Libs_Manager` namespace or fully qualified.
+3. **Hardcoded CDN versions** — Pinned for stability. Update deliberately and test on staging.
+4. **Reversing enqueue priority** — Global settings must override per-page (see `frontend.php` logic).
+5. **Manual term creation** — Don't. The `admin_init` hook auto-syncs on library changes via signature hash.
+
+## Version Bumping
+
+When releasing:
+1. Update `Version:` in `javascript-libraries-manager.php` header
+2. Update `JS_LIBS_MANAGER_VERSION` constant
+3. Git tag with `v` prefix (e.g., `v1.2.0`) for GitHub update system
+4. Push tag: `git push origin v1.2.0`
+
+---
+
+**Last Updated**: 2025-11-28 — Tell me which library you want to add and I'll generate the exact code.

@@ -22,8 +22,15 @@ function js_libs_manager_enqueue_fontawesome() {
     // $kit is stored as a sanitized URL (see admin sanitize callback).
     $handle = 'js-libs-manager-fontawesome-kit';
 
-    // Enqueue in the head (in_footer = false)
-    wp_enqueue_script( $handle, $kit, array(), JS_LIBS_MANAGER_VERSION, false );
+    // Check if we're in Etch canvas context
+    $is_etch_canvas = did_action( 'etch/canvas/enqueue_assets' ) || doing_action( 'etch/canvas/enqueue_assets' );
+    
+    // For Etch canvas, load in footer so it works with the hook
+    // For normal frontend, load in head as usual
+    $in_footer = $is_etch_canvas ? true : false;
+    
+    // Enqueue the script
+    wp_enqueue_script( $handle, $kit, array(), JS_LIBS_MANAGER_VERSION, $in_footer );
 
     // Many kits require crossorigin attribute
     wp_script_add_data( $handle, 'crossorigin', 'anonymous' );
