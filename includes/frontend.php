@@ -76,3 +76,120 @@ function enqueue_enabled_libraries() {
 }
 
 add_action( 'wp_enqueue_scripts', __NAMESPACE__ . '\\enqueue_enabled_libraries', 20 );
+
+/**
+ * Enqueue libraries into Etch Builder Preview canvas.
+ *
+ * Enqueues globally-enabled libraries and per-page js_library taxonomy terms when enabled.
+ */
+function enqueue_etch_canvas_libraries() {
+    // Check if Etch enqueuing is enabled
+    if ( ! get_option( 'js_libs_manager_enqueue_in_etch', false ) ) {
+        return;
+    }
+
+    $all_libs    = get_registered_libraries();
+    $global_libs = get_option( 'js_libs_manager_enabled_libs', [] );
+    $page_lib_slugs = [];
+    
+    // Get per-page libraries from js_library taxonomy if Etch preview is enabled for this page
+    $post_id = get_the_ID();
+    if ( $post_id && get_post_meta( $post_id, '_js_libs_manager_etch_preview_enabled', true ) === '1' ) {
+        $post_terms = wp_get_post_terms( $post_id, 'js_library', [ 'fields' => 'slugs' ] );
+        if ( ! is_wp_error( $post_terms ) ) {
+            // Convert taxonomy term slugs back to library keys
+            foreach ( $all_libs as $slug => $lib ) {
+                $term_slug = sanitize_title( $lib['label'] );
+                if ( in_array( $term_slug, (array) $post_terms, true ) ) {
+                    $page_lib_slugs[] = $slug;
+                }
+            }
+        }
+    }
+    
+    // Merge global and per-page selections (unique)
+    $libs_to_load = array_unique( array_merge( (array) $global_libs, $page_lib_slugs ) );
+
+    // Enqueue selected libraries
+    foreach ( $all_libs as $slug => $lib ) {
+        if ( ! in_array( $slug, $libs_to_load, true ) ) {
+            continue;
+        }
+
+        $callback = $lib['enqueue_callback'] ?? null;
+        if ( is_callable( $callback ) ) {
+            call_user_func( $callback );
+        }
+    }
+}
+
+add_action( 'etch/canvas/enqueue_assets', __NAMESPACE__ . '\\enqueue_etch_canvas_libraries' );
+
+/**
+ * Add stylesheets to Etch Builder Preview canvas.
+ *
+ * Collects CSS files from globally-enabled libraries and per-page js_library taxonomy terms.
+ */
+function add_etch_canvas_stylesheets( $stylesheets ) {
+    // Check if Etch enqueuing is enabled
+    if ( ! get_option( 'js_libs_manager_enqueue_in_etch', false ) ) {
+        return $stylesheets;
+    }
+
+    $all_libs    = get_registered_libraries();
+    $global_libs = get_option( 'js_libs_manager_enabled_libs', [] );
+    $page_lib_slugs = [];
+    
+    // Get per-page libraries from js_library taxonomy if Etch preview is enabled for this page
+    $post_id = get_the_ID();
+    if ( $post_id && get_post_meta( $post_id, '_js_libs_manager_etch_preview_enabled', true ) === '1' ) {
+        $post_terms = wp_get_post_terms( $post_id, 'js_library', [ 'fields' => 'slugs' ] );
+        if ( ! is_wp_error( $post_terms ) ) {
+            // Convert taxonomy term slugs back to library keys
+            foreach ( $all_libs as $slug => $lib ) {
+                $term_slug = sanitize_title( $lib['label'] );
+                if ( in_array( $term_slug, (array) $post_terms, true ) ) {
+                    $page_lib_slugs[] = $slug;
+                }
+            }
+        }
+    }
+    
+    // Merge global and per-page selections (unique)
+    $libs_to_load = array_unique( array_merge( (array) $global_libs, $page_lib_slugs ) );
+
+    // Collect registered styles from selected libraries
+    foreach ( $all_libs as $slug => $lib ) {
+        if ( ! in_array( $slug, $libs_to_load, true ) ) {
+            continue;
+        }
+
+        // Trigger the enqueue callback to register styles
+        $callback = $lib['enqueue_callback'] ?? null;
+        if ( is_callable( $callback ) ) {
+            call_user_func( $callback );
+        }
+    }
+
+    // Now collect all registered styles and add to Etch
+    global $wp_styles;
+    if ( ! isset( $wp_styles ) ) {
+        return $stylesheets;
+    }
+
+    foreach ( $wp_styles->registered as $handle => $style ) {
+        // Only include styles registered by this plugin
+        if ( strpos( $handle, 'js-libs-manager-' ) !== 0 ) {
+            continue;
+        }
+
+        $stylesheets[] = [
+            'id'  => $handle,
+            'url' => $style->src,
+        ];
+    }
+
+    return $stylesheets;
+}
+
+add_filter( 'etch/canvas/additional_stylesheets', __NAMESPACE__ . '\\add_etch_canvas_stylesheets' );

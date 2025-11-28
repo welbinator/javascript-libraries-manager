@@ -30,6 +30,17 @@ function register_settings() {
             'default'           => '',
         ]
     );
+
+    // Etch Builder Preview option
+    register_setting(
+        'js_libs_manager_options',
+        'js_libs_manager_enqueue_in_etch',
+        [
+            'type'              => 'boolean',
+            'sanitize_callback' => 'rest_sanitize_boolean',
+            'default'           => false,
+        ]
+    );
 }
 add_action( 'admin_init', __NAMESPACE__ . '\\register_settings' );
 
@@ -117,6 +128,72 @@ function admin_menu() {
 add_action( 'admin_menu', __NAMESPACE__ . '\\admin_menu' );
 
 /**
+ * Register meta box for Etch preview option.
+ */
+function add_etch_preview_meta_box() {
+    add_meta_box(
+        'js_libs_manager_etch_preview',
+        __( 'Etch Builder Preview', 'js-libs-manager' ),
+        __NAMESPACE__ . '\\render_etch_preview_meta_box',
+        ['post', 'page'],
+        'side',
+        'default'
+    );
+}
+add_action( 'add_meta_boxes', __NAMESPACE__ . '\\add_etch_preview_meta_box' );
+
+/**
+ * Render the Etch preview meta box.
+ */
+function render_etch_preview_meta_box( $post ) {
+    wp_nonce_field( 'js_libs_manager_etch_preview_nonce', 'js_libs_manager_etch_preview_nonce' );
+    
+    $enabled = get_post_meta( $post->ID, '_js_libs_manager_etch_preview_enabled', true );
+    
+    ?>
+    <label>
+        <input
+            type="checkbox"
+            name="js_libs_manager_etch_preview_enabled" 
+            value="1"
+            <?php checked( $enabled, '1' ); ?>
+        >
+        <?php esc_html_e( 'Load this page\'s JS libraries in Etch preview', 'js-libs-manager' ); ?>
+    </label>
+    <p class="description" style="margin-top: 10px;">
+        <?php esc_html_e( 'When checked, libraries selected in the "JS Libraries" panel will be loaded in the Etch builder preview.', 'js-libs-manager' ); ?>
+    </p>
+    <?php
+}
+
+/**
+ * Save Etch preview option.
+ */
+function save_etch_preview_meta( $post_id ) {
+    // Security checks
+    if ( ! isset( $_POST['js_libs_manager_etch_preview_nonce'] ) ) {
+        return;
+    }
+    
+    if ( ! wp_verify_nonce( $_POST['js_libs_manager_etch_preview_nonce'], 'js_libs_manager_etch_preview_nonce' ) ) {
+        return;
+    }
+    
+    if ( defined( 'DOING_AUTOSAVE' ) && DOING_AUTOSAVE ) {
+        return;
+    }
+    
+    if ( ! current_user_can( 'edit_post', $post_id ) ) {
+        return;
+    }
+    
+    // Save checkbox state
+    $enabled = isset( $_POST['js_libs_manager_etch_preview_enabled'] ) ? '1' : '0';
+    update_post_meta( $post_id, '_js_libs_manager_etch_preview_enabled', $enabled );
+}
+add_action( 'save_post', __NAMESPACE__ . '\\save_etch_preview_meta' );
+
+/**
  * Render the settings page.
  */
 function render_settings_page() {
@@ -184,6 +261,30 @@ function render_settings_page() {
 
                             <p class="description">
                                 <?php esc_html_e( 'Select the JavaScript libraries you want to enqueue on the frontend.', 'js-libs-manager' ); ?>
+                            </p>
+                        </fieldset>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row">
+                        <?php esc_html_e( 'Etch Builder', 'js-libs-manager' ); ?>
+                    </th>
+                    <td>
+                        <fieldset>
+                            <legend class="screen-reader-text">
+                                <?php esc_html_e( 'Etch Builder Preview Settings', 'js-libs-manager' ); ?>
+                            </legend>
+                            <label>
+                                <input
+                                    type="checkbox"
+                                    name="js_libs_manager_enqueue_in_etch"
+                                    value="1"
+                                    <?php checked( get_option( 'js_libs_manager_enqueue_in_etch', false ), true ); ?>
+                                >
+                                <?php esc_html_e( 'Enqueue these scripts into the Etch Builder Preview', 'js-libs-manager' ); ?>
+                            </label>
+                            <p class="description">
+                                <?php esc_html_e( 'When enabled, globally-enabled libraries will be loaded in the Etch page builder preview canvas.', 'js-libs-manager' ); ?>
                             </p>
                         </fieldset>
                     </td>
