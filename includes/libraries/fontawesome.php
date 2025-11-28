@@ -25,12 +25,14 @@ function js_libs_manager_enqueue_fontawesome() {
     // Check if we're in Etch canvas context
     $is_etch_canvas = did_action( 'etch/canvas/enqueue_assets' ) || doing_action( 'etch/canvas/enqueue_assets' );
     
-    // For Etch canvas, load in footer so it works with the hook
-    // For normal frontend, load in head as usual
-    $in_footer = $is_etch_canvas ? true : false;
+    // Skip normal enqueue in Etch context - Font Awesome will be handled separately
+    // to prevent Etch from appending query parameters that cause 403 errors
+    if ( $is_etch_canvas ) {
+        return;
+    }
     
-    // Enqueue the script
-    wp_enqueue_script( $handle, $kit, array(), JS_LIBS_MANAGER_VERSION, $in_footer );
+    // Enqueue in the head (in_footer = false)
+    wp_enqueue_script( $handle, $kit, array(), JS_LIBS_MANAGER_VERSION, false );
 
     // Many kits require crossorigin attribute
     wp_script_add_data( $handle, 'crossorigin', 'anonymous' );

@@ -126,12 +126,12 @@ function enqueue_etch_canvas_libraries() {
 add_action( 'etch/canvas/enqueue_assets', __NAMESPACE__ . '\\enqueue_etch_canvas_libraries' );
 
 /**
- * Add Font Awesome script tag directly to Etch canvas head.
+ * Output Font Awesome kit directly as inline script in body footer.
  * 
- * Font Awesome kits load CSS dynamically, so they need to be in the head
- * and can't rely on standard WordPress enqueue system in Etch context.
+ * This bypasses Etch's URL modification system which appends query parameters
+ * that cause Font Awesome kits to return 403 errors.
  */
-function add_fontawesome_to_etch_head() {
+function output_fontawesome_inline_for_etch() {
     // Check if Etch enqueuing is enabled
     if ( ! get_option( 'js_libs_manager_enqueue_in_etch', false ) ) {
         return;
@@ -163,12 +163,23 @@ function add_fontawesome_to_etch_head() {
     if ( in_array( 'fontawesome', $libs_to_load, true ) ) {
         $kit = get_option( 'js_libs_manager_fontawesome_kit', '' );
         if ( ! empty( $kit ) ) {
-            echo '<script src="' . esc_url( $kit ) . '" crossorigin="anonymous"></script>' . "\n";
+            // Output as inline script that loads Font Awesome dynamically
+            // This prevents Etch from modifying the URL
+            ?>
+            <script>
+            (function() {
+                var script = document.createElement('script');
+                script.src = <?php echo wp_json_encode( $kit ); ?>;
+                script.crossOrigin = 'anonymous';
+                document.head.appendChild(script);
+            })();
+            </script>
+            <?php
         }
     }
 }
 
-add_action( 'wp_head', __NAMESPACE__ . '\\add_fontawesome_to_etch_head', 1 );
+add_action( 'wp_footer', __NAMESPACE__ . '\\output_fontawesome_inline_for_etch', 1 );
 
 /**
  * Add stylesheets to Etch Builder Preview canvas.
